@@ -16,6 +16,7 @@ import type {OverscaledTileID} from '../source/tile_id';
 import {clamp, nextPowerOfTwo} from '../util/util';
 import {renderColorRamp} from '../util/color_ramp';
 import {EXTENT} from '../data/extent';
+import {CrossFaded, PossiblyEvaluatedPropertyValue} from '../style/properties';
 
 export function drawLine(painter: Painter, sourceCache: SourceCache, layer: LineStyleLayer, coords: Array<OverscaledTileID>) {
     if (painter.renderPass !== 'translucent') return;
@@ -27,7 +28,9 @@ export function drawLine(painter: Painter, sourceCache: SourceCache, layer: Line
     const depthMode = painter.depthModeForSublayer(0, DepthMode.ReadOnly);
     const colorMode = painter.colorModeForRenderPass();
 
-    const dasharray = layer.paint.get('line-dasharray');
+    const dasharray: PossiblyEvaluatedPropertyValue<CrossFaded<number[]>> = layer.paint.get('line-dasharray');
+    const constantDasharray: CrossFaded<number[]> = dasharray?.constantOr(null);
+
     const patternProperty = layer.paint.get('line-pattern');
     const image = patternProperty.constantOr(1 as any);
 
@@ -36,7 +39,7 @@ export function drawLine(painter: Painter, sourceCache: SourceCache, layer: Line
 
     const programId =
         image ? 'linePattern' :
-            dasharray ? 'lineSDF' :
+            constantDasharray ? 'lineSDF' :
                 gradient ? 'lineGradient' : 'line';
 
     const context = painter.context;
@@ -68,7 +71,7 @@ export function drawLine(painter: Painter, sourceCache: SourceCache, layer: Line
 
         const terrainCoord = terrainData ? coord : null;
         const uniformValues = image ? linePatternUniformValues(painter, tile, layer, crossfade, terrainCoord) :
-            dasharray ? lineSDFUniformValues(painter, tile, layer, dasharray, crossfade, terrainCoord) :
+            constantDasharray ? lineSDFUniformValues(painter, tile, layer, constantDasharray, crossfade, terrainCoord) :
                 gradient ? lineGradientUniformValues(painter, tile, layer, bucket.lineClipsArray.length, terrainCoord) :
                     lineUniformValues(painter, tile, layer, terrainCoord);
 
@@ -76,7 +79,7 @@ export function drawLine(painter: Painter, sourceCache: SourceCache, layer: Line
             context.activeTexture.set(gl.TEXTURE0);
             tile.imageAtlasTexture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
             programConfiguration.updatePaintBuffers(crossfade);
-        } else if (dasharray && (programChanged || painter.lineAtlas.dirty)) {
+        } else if (constantDasharray && (programChanged || painter.lineAtlas.dirty)) {
             context.activeTexture.set(gl.TEXTURE0);
             painter.lineAtlas.bind(context);
         } else if (gradient) {
