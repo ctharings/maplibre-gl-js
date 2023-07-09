@@ -708,6 +708,10 @@ function getLayoutException(property) {
         'fill-extrusion-pattern': {
             'source': PatternLayoutArray,
             'composite': PatternLayoutArray
+        },
+        'line-dasharray': {
+            'source': PatternLayoutArray,
+            'composite': PatternLayoutArray
         }
     };
 
