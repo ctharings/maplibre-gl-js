@@ -16,7 +16,7 @@ import type {OverscaledTileID} from '../source/tile_id';
 import {clamp, nextPowerOfTwo} from '../util/util';
 import {renderColorRamp} from '../util/color_ramp';
 import {EXTENT} from '../data/extent';
-import {CrossFaded, PossiblyEvaluatedPropertyValue} from '../style/properties';
+import {PossiblyEvaluatedPropertyValue} from '../style/properties';
 
 export function drawLine(painter: Painter, sourceCache: SourceCache, layer: LineStyleLayer, coords: Array<OverscaledTileID>) {
     if (painter.renderPass !== 'translucent') return;
@@ -28,8 +28,8 @@ export function drawLine(painter: Painter, sourceCache: SourceCache, layer: Line
     const depthMode = painter.depthModeForSublayer(0, DepthMode.ReadOnly);
     const colorMode = painter.colorModeForRenderPass();
 
-    const dasharray: PossiblyEvaluatedPropertyValue<CrossFaded<number[]>> = layer.paint.get('line-dasharray');
-    const constantDasharray: CrossFaded<number[]> = dasharray?.constantOr(null);
+    const dasharray: PossiblyEvaluatedPropertyValue<number[]> = layer.paint.get('line-dasharray');
+    const constantDasharray: number[] = dasharray?.constantOr(null);
 
     const patternProperty = layer.paint.get('line-pattern');
     const image = patternProperty.constantOr(1 as any);

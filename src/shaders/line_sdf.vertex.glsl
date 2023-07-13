@@ -16,16 +16,13 @@ in vec4 a_data;
 uniform mat4 u_matrix;
 uniform mediump float u_ratio;
 uniform lowp float u_device_pixel_ratio;
-uniform vec2 u_patternscale_a;
-uniform float u_tex_y_a;
-uniform vec2 u_patternscale_b;
-uniform float u_tex_y_b;
+uniform vec2 u_patternscale;
+uniform float u_tex_y;
 uniform vec2 u_units_to_pixels;
 
 out vec2 v_normal;
 out vec2 v_width2;
-out vec2 v_tex_a;
-out vec2 v_tex_b;
+out vec2 v_tex;
 out float v_gamma_scale;
 
 #pragma mapbox: define highp vec4 color
@@ -95,7 +92,6 @@ void main() {
         v_gamma_scale = extrude_length_without_perspective / extrude_length_with_perspective;
     #endif
 
-    v_tex_a = vec2(a_linesofar * u_patternscale_a.x / floorwidth, normal.y * u_patternscale_a.y + u_tex_y_a);
-    v_tex_b = vec2(a_linesofar * u_patternscale_b.x / floorwidth, normal.y * u_patternscale_b.y + u_tex_y_b);
+    v_tex = vec2(linesofar * u_patternscale.x / floorwidth, normal.y * u_patternscale.y + u_tex_y);
     v_width2 = vec2(outset, inset);
 }

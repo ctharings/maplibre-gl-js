@@ -155,7 +155,7 @@ const lineSDFUniformValues = (
     painter: Painter,
     tile: Tile,
     layer: LineStyleLayer,
-    dasharray: CrossFaded<Array<number>>,
+    dasharray: Array<number>,
     crossfade: CrossfadeParameters,
     coord: OverscaledTileID
 ): UniformValues<LineSDFUniformsType> => {
@@ -165,20 +165,15 @@ const lineSDFUniformValues = (
 
     const round = layer.layout.get('line-cap') === 'round';
 
-    const posA = lineAtlas.getDash(dasharray.from, round);
-    const posB = lineAtlas.getDash(dasharray.to, round);
+    const pos = lineAtlas.getDash(dasharray, round);
 
-    const widthA = posA.width * crossfade.fromScale;
-    const widthB = posB.width * crossfade.toScale;
+    const width = pos.width * crossfade.toScale;
 
     return extend(lineUniformValues(painter, tile, layer, coord), {
-        'u_patternscale_a': [tileRatio / widthA, -posA.height / 2],
-        'u_patternscale_b': [tileRatio / widthB, -posB.height / 2],
-        'u_sdfgamma': lineAtlas.width / (Math.min(widthA, widthB) * 256 * painter.pixelRatio) / 2,
+        'u_patternscale': [tileRatio / width, -pos.height / 2],
+        'u_sdfgamma': lineAtlas.width / (Math.min(width, width) * 256 * painter.pixelRatio) / 2,
         'u_image': 0,
-        'u_tex_y_a': posA.y,
-        'u_tex_y_b': posB.y,
-        'u_mix': crossfade.t
+        'u_tex_y': pos.y
     });
 };
 
