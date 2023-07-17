@@ -5,6 +5,7 @@
 /test/bench/results/
 /docs/API
 /docs/examples
+/docs/example
 *.es.js
 *.js.map
 node_modules

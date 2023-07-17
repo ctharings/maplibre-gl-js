@@ -62,9 +62,6 @@ type PainterOptions = {
 
 /**
  * Initialize a new painter object.
- *
- * @param {Canvas} gl a webgl drawing context
- * @private
  */
 export class Painter {
     context: Context;
@@ -135,8 +132,8 @@ export class Painter {
      * for a new width and height value.
      */
     resize(width: number, height: number, pixelRatio: number) {
-        this.width = width * pixelRatio;
-        this.height = height * pixelRatio;
+        this.width = Math.floor(width * pixelRatio);
+        this.height = Math.floor(height * pixelRatio);
         this.pixelRatio = pixelRatio;
         this.context.viewport.set([0, 0, this.width, this.height]);
 
@@ -511,11 +508,10 @@ export class Painter {
 
     /**
      * Transform a matrix to incorporate the *-translate and *-translate-anchor properties into it.
-     * @param inViewportPixelUnitsUnits True when the units accepted by the matrix are in viewport pixels instead of tile units.
-     * @returns {mat4} matrix
-     * @private
+     * @param inViewportPixelUnitsUnits - True when the units accepted by the matrix are in viewport pixels instead of tile units.
+     * @returns matrix
      */
-    translatePosMatrix(matrix: mat4, tile: Tile, translate: [number, number], translateAnchor: 'map' | 'viewport', inViewportPixelUnitsUnits?: boolean) {
+    translatePosMatrix(matrix: mat4, tile: Tile, translate: [number, number], translateAnchor: 'map' | 'viewport', inViewportPixelUnitsUnits?: boolean): mat4 {
         if (!translate[0] && !translate[1]) return matrix;
 
         const angle = inViewportPixelUnitsUnits ?
@@ -560,7 +556,6 @@ export class Painter {
      * Checks whether a pattern image is needed, and if it is, whether it is not loaded.
      *
      * @returns true if a needed image is missing and rendering needs to be skipped.
-     * @private
      */
     isPatternMissing(image?: CrossFaded<ResolvedImage> | null): boolean {
         if (!image) return false;
@@ -579,7 +574,6 @@ export class Painter {
         if (!this.cache[key]) {
             this.cache[key] = new Program(
                 this.context,
-                name,
                 shaders[name],
                 programConfiguration,
                 programUniforms[name],
@@ -633,5 +627,15 @@ export class Painter {
         if (this.debugOverlayTexture) {
             this.debugOverlayTexture.destroy();
         }
+    }
+
+    /*
+     * Return true if drawing buffer size is != from requested size.
+     * That means that we've reached GL limits somehow.
+     * Note: drawing buffer size changes only when canvas size changes
+     */
+    overLimit() {
+        const {drawingBufferWidth, drawingBufferHeight} = this.context.gl;
+        return this.width !== drawingBufferWidth || this.height !== drawingBufferHeight;
     }
 }

@@ -25,7 +25,12 @@ Adds a control to allow users to plot driving, walking, and cycling directions o
 #### mapbox-gl-draw
 Adds support for drawing and editing features on maps.
 <br/><small>[View on GitHub](https://github.com/mapbox/mapbox-gl-draw)</small>
-    
+
+#### terra-draw
+
+Provides a MapLibre GL JS adapter to allow creation, selection and editing of geometries.
+<br/><small>[View on GitHub](https://github.com/JamesLMilner/terra-draw)</small>
+
 #### mapbox-gl-elevation
 Adds a control to retrieve altitude from terrain RGB tilesets.
 <br/><small>[View on GitHub](https://github.com/watergis/mapbox-gl-elevation)</small>
@@ -85,6 +90,10 @@ A modular plugin for calculating routes.
 #### maplibre-search-box
 Adds a control for searching for places using Stadia Maps.
 <br/><small>[View on GitHub](https://github.com/stadiamaps/maplibre-search-box)</small>
+
+#### route-snapper
+Draw routes and areas snapped to roads.
+<br/><small>[View on GitHub](https://github.com/dabreegster/route_snapper)</small>
   
 ##  Map Rendering Plugins
 
@@ -165,6 +174,10 @@ Provides an [Elm](https://elm-lang.org) integration.
 #### ember-mapbox-gl
 Provides an [Ember](http://emberjs.com) integration.
 <br/><small>[View on GitHub](https://github.com/kturney/ember-mapbox-gl)</small>
+
+#### svelte-maplibre
+Provides a [Svelte](https://svelte.dev) integration.
+<br/><small>[View on GitHub](https://github.com/dimfeld/svelte-maplibre)</small>
   
 ## Utility Libraries
 

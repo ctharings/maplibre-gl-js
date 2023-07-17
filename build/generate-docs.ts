@@ -13,8 +13,10 @@ function generateAPIIntroMarkdown(lines: string[]): string {
     let intro = `# Intro
 
 This file is intended as a reference for the important and public classes of this API.
+We recommend looking at the [examples](../examples/index.md) as they will help you the most to start with MapLibre.
 
-We reccomend to look at the [expamples](../examples/index.md) as they will help you the most to start with MapLibre.
+Most of the classes wirtten here have an "Options" object for initialization, it is recommended to check which options exist. 
+
 `;
     intro += lines.map(l => l.replace('../', './')).join('\n');
     return intro;
@@ -35,7 +37,7 @@ ${htmlContent}
 }
 
 function generateMarkdownIndexFileOfAllExamples(indexArray: HtmlDoc[]): string {
-    let indexMarkdown = '# Exmaples \n\n';
+    let indexMarkdown = '# Overview \n\n';
     for (const indexArrayItem of indexArray) {
         indexMarkdown += `
 ## [${indexArrayItem.title}](./${indexArrayItem.mdFileName})
