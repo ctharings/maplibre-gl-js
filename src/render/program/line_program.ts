@@ -44,8 +44,7 @@ export type LineSDFUniformsType = {
     'u_ratio': Uniform1f;
     'u_device_pixel_ratio': Uniform1f;
     'u_units_to_pixels': Uniform2f;
-    'u_patternscale_a': Uniform2f;
-    'u_patternscale_b': Uniform2f;
+    'u_patternscale': Uniform2f;
     'u_sdfgamma': Uniform1f;
     'u_image': Uniform1i;
     'u_tex_y_a': Uniform1f;
@@ -85,8 +84,7 @@ const lineSDFUniforms = (context: Context, locations: UniformLocations): LineSDF
     'u_ratio': new Uniform1f(context, locations.u_ratio),
     'u_device_pixel_ratio': new Uniform1f(context, locations.u_device_pixel_ratio),
     'u_units_to_pixels': new Uniform2f(context, locations.u_units_to_pixels),
-    'u_patternscale_a': new Uniform2f(context, locations.u_patternscale_a),
-    'u_patternscale_b': new Uniform2f(context, locations.u_patternscale_b),
+    'u_patternscale': new Uniform2f(context, locations.u_patternscale),
     'u_sdfgamma': new Uniform1f(context, locations.u_sdfgamma),
     'u_image': new Uniform1i(context, locations.u_image),
     'u_tex_y_a': new Uniform1f(context, locations.u_tex_y_a),
