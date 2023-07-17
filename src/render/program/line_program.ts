@@ -47,8 +47,7 @@ export type LineSDFUniformsType = {
     'u_patternscale': Uniform2f;
     'u_sdfgamma': Uniform1f;
     'u_image': Uniform1i;
-    'u_tex_y_a': Uniform1f;
-    'u_tex_y_b': Uniform1f;
+    'u_tex_y': Uniform1f;
     'u_mix': Uniform1f;
 };
 
@@ -87,8 +86,7 @@ const lineSDFUniforms = (context: Context, locations: UniformLocations): LineSDF
     'u_patternscale': new Uniform2f(context, locations.u_patternscale),
     'u_sdfgamma': new Uniform1f(context, locations.u_sdfgamma),
     'u_image': new Uniform1i(context, locations.u_image),
-    'u_tex_y_a': new Uniform1f(context, locations.u_tex_y_a),
-    'u_tex_y_b': new Uniform1f(context, locations.u_tex_y_b),
+    'u_tex_y': new Uniform1f(context, locations.u_tex_y),
     'u_mix': new Uniform1f(context, locations.u_mix)
 });
 
