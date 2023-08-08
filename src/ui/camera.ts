@@ -262,18 +262,31 @@ export abstract class Camera extends Evented {
     _onEaseEnd: (easeId?: string) => void;
     _easeFrameId: TaskID;
 
-    // holds the geographical coordinate of the target
-    _elevationCenter: LngLat;
-    // holds the targ altitude value, = center elevation of the target.
-    // This value may changes during flight, because new terrain-tiles loads during flight.
-    _elevationTarget: number;
-    // holds the start altitude value, = center elevation before animation begins
-    // this value will recalculated during flight in respect of changing _elevationTarget values,
-    // so the linear interpolation between start and target keeps smooth and without jumps.
-    _elevationStart: number;
-
     /**
-     * @hidden
+     * @internal
+     * holds the geographical coordinate of the target
+     */
+    _elevationCenter: LngLat;
+    /**
+     * @internal
+     * holds the targ altitude value, = center elevation of the target.
+     * This value may changes during flight, because new terrain-tiles loads during flight.
+     */
+    _elevationTarget: number;
+    /**
+     * @internal
+     * holds the start altitude value, = center elevation before animation begins
+     * this value will recalculated during flight in respect of changing _elevationTarget values,
+     * so the linear interpolation between start and target keeps smooth and without jumps.
+     */
+    _elevationStart: number;
+    /**
+     * @internal
+     * Saves the current state of the elevation freeze - this is used during map movement to prevent "rocky" camera movement.
+     */
+    _elevationFreeze: boolean;
+    /**
+     * @internal
      * Used to track accumulated changes during continuous interaction
      */
     _requestedCameraState?: Transform;
@@ -632,6 +645,7 @@ export abstract class Camera extends Evented {
     }
 
     /**
+     * @internal
      * Calculate the center of these two points in the viewport and use
      * the highest zoom level up to and including `Map#getMaxZoom()` that fits
      * the points in the viewport at the specified bearing.
@@ -641,7 +655,6 @@ export abstract class Camera extends Evented {
      * @param options - the camera options
      * @returns If map is able to fit to provided bounds, returns `center`, `zoom`, and `bearing`.
      *      If map is unable to fit, method will warn and return undefined.
-     * @hidden
      * @example
      * ```ts
      * let p0 = [-79, 43];
@@ -1049,12 +1062,13 @@ export abstract class Camera extends Evented {
     _prepareElevation(center: LngLat) {
         this._elevationCenter = center;
         this._elevationStart = this.transform.elevation;
-        this._elevationTarget = this.transform.getElevation(center, this.terrain);
-        this.transform.freezeElevation = true;
+        this._elevationTarget = this.terrain.getElevationForLngLatZoom(center, this.transform.tileZoom);
+        this._elevationFreeze = true;
     }
 
     _updateElevation(k: number) {
-        const elevation = this.transform.getElevation(this._elevationCenter, this.terrain);
+        this.transform._minEleveationForCurrentTile = this.terrain.getMinTileElevationForLngLatZoom(this._elevationCenter, this.transform.tileZoom);
+        const elevation = this.terrain.getElevationForLngLatZoom(this._elevationCenter, this.transform.tileZoom);
         // target terrain updated during flight, slowly move camera to new height
         if (k < 1 && elevation !== this._elevationTarget) {
             const pitch1 = this._elevationTarget - this._elevationStart;
@@ -1066,16 +1080,16 @@ export abstract class Camera extends Evented {
     }
 
     _finalizeElevation() {
-        this.transform.freezeElevation = false;
+        this._elevationFreeze = false;
         this.transform.recalculateZoom(this.terrain);
     }
 
     /**
+     * @internal
      * Called when the camera is about to be manipulated.
      * If `transformCameraUpdate` is specified, a copy of the current transform is created to track the accumulated changes.
      * This underlying transform represents the "desired state" proposed by input handlers / animations / UI controls.
      * It may differ from the state used for rendering (`this.transform`).
-     * @hidden
      * @returns Transform to apply changes to
      */
     _getTransformForUpdate(): Transform {
@@ -1088,8 +1102,8 @@ export abstract class Camera extends Evented {
     }
 
     /**
+     * @internal
      * Called after the camera is done being manipulated.
-     * @hidden
      * @param tr - the requested camera end state
      * Call `transformCameraUpdate` if present, and then apply the "approved" changes.
      */
@@ -1450,9 +1464,9 @@ export abstract class Camera extends Evented {
         if (!this.terrain) {
             return null;
         }
-        const elevation = this.transform.getElevation(LngLat.convert(lngLatLike), this.terrain);
+        const elevation = this.terrain.getElevationForLngLatZoom(LngLat.convert(lngLatLike), this.transform.tileZoom);
         /**
-         * Different zoomlevels with different terrain-tiles the elvation-values are not the same.
+         * Different zoomlevels with different terrain-tiles the elevation-values are not the same.
          * map.transform.elevation variable with the center-altitude.
          * In maplibre the proj-matrix is translated by this value in negative z-direction.
          * So we need to add this value to the elevation to get the correct value.

@@ -504,7 +504,7 @@ export class Map extends Camera {
     _terrainDataCallback: (e: MapStyleDataEvent | MapSourceDataEvent) => void;
 
     /**
-     * @hidden
+     * @internal
      * image queue throttling handle. To be used later when clean up
      */
     _imageQueueHandle: number;
@@ -707,9 +707,9 @@ export class Map extends Camera {
     }
 
     /**
+     * @internal
      * Returns a unique number for this map instance which is used for the MapLoadEvent
      * to make sure we only fire one event per instantiated map object.
-     * @hidden
      * @returns the uniq map ID
      */
     _getMapId() {
@@ -805,7 +805,7 @@ export class Map extends Camera {
 
     calculateCameraOptionsFromTo(from: LngLat, altitudeFrom: number, to: LngLat, altitudeTo?: number): CameraOptions {
         if (altitudeTo == null && this.terrain) {
-            altitudeTo = this.transform.getElevation(to, this.terrain);
+            altitudeTo = this.terrain.getElevationForLngLatZoom(to, this.transform.tileZoom);
         }
         return super.calculateCameraOptionsFromTo(from, altitudeFrom, to, altitudeTo);
     }
@@ -868,9 +868,9 @@ export class Map extends Camera {
     }
 
     /**
+     * @internal
      * Return the map's pixel ratio eventually scaled down to respect maxCanvasSize.
      * Internally you should use this and not getPixelRatio().
-     * @hidden
      */
     _getClampedPixelRatio(width: number, height: number): number {
         const {0: maxCanvasWidth, 1: maxCanvasHeight} = this._maxCanvasSize;
@@ -1367,8 +1367,8 @@ export class Map extends Camera {
      * when the cursor enters a visible portion of the specified layer from outside that layer or outside the map canvas.
      * @param layer - The ID of a style layer or a listener if no ID is provided. Event will only be triggered if its location
      * is within a visible feature in this layer. The event will have a `features` property containing
-     * an array of the matching features. If `layerIdOrListener` is not supplied, the event will not have a `features` property.
-     * Please note that many event types are not compatible with the optional `layerIdOrListener` parameter.
+     * an array of the matching features. If `layer` is not supplied, the event will not have a `features` property.
+     * Please note that many event types are not compatible with the optional `layer` parameter.
      * @param listener - The function to be called when the event is fired.
      * @returns `this`
      * @example
@@ -1411,21 +1411,27 @@ export class Map extends Camera {
      * @see [Create a hover effect](https://maplibre.org/maplibre-gl-js/docs/examples/hover-styles/)
      * @see [Create a draggable marker](https://maplibre.org/maplibre-gl-js/docs/examples/drag-a-point/)
      */
-    on(type: keyof MapEventType | string, listener: Listener): this;
     on<T extends keyof MapLayerEventType>(
         type: T,
         layer: string,
         listener: (ev: MapLayerEventType[T] & Object) => void,
     ): Map;
-    on<T extends keyof MapEventType>(type: T, listener: (ev: MapEventType[T] & Object) => void): this;
     /**
-     * This is an overload of the `on` method that allows to listen to events based on the `layerId`
+     * Overload of the `on` method that allows to listen to events without specifying a layer.
      * @event
      * @param type - The type of the event.
-     * @param layerIdOrListener - The ID of the layer.
      * @param listener - The listener callback.
      * @returns `this`
      */
+    on<T extends keyof MapEventType>(type: T, listener: (ev: MapEventType[T] & Object) => void): this;
+    /**
+     * Overload of the `on` method that allows to listen to events without specifying a layer.
+     * @event
+     * @param type - The type of the event.
+     * @param listener - The listener callback.
+     * @returns `this`
+     */
+    on(type: keyof MapEventType | string, listener: Listener): this;
     on(type: keyof MapEventType | string, layerIdOrListener: string | Listener, listener?: Listener): this {
         if (listener === undefined) {
             return super.on(type, layerIdOrListener as Listener);
@@ -1445,7 +1451,7 @@ export class Map extends Camera {
     }
 
     /**
-     * Adds a listener that will be called only once to a specified event type occurring on features in a specified style layer.
+     * Adds a listener that will be called only once to a specified event type, optionally limited to features in a specified style layer.
      *
      * @event
      * @param type - The event type to listen for; one of `'mousedown'`, `'mouseup'`, `'click'`, `'dblclick'`,
@@ -1460,13 +1466,27 @@ export class Map extends Camera {
      * @param listener - The function to be called when the event is fired.
      * @returns `this` if listener is provided, promise otherwise to allow easier usage of async/await
      */
-    once(type: keyof MapEventType | string, listener?: Listener): this | Promise<any>;
     once<T extends keyof MapLayerEventType>(
         type: T,
         layer: string,
         listener?: (ev: MapLayerEventType[T] & Object) => void,
     ): this | Promise<MapLayerEventType[T] & Object>;
+    /**
+     * Overload of the `once` method that allows to listen to events without specifying a layer.
+     * @event
+     * @param type - The type of the event.
+     * @param listener - The listener callback.
+     * @returns `this`
+     */
     once<T extends keyof MapEventType>(type: T, listener?: (ev: MapEventType[T] & Object) => void): this | Promise<any>;
+    /**
+     * Overload of the `once` method that allows to listen to events without specifying a layer.
+     * @event
+     * @param type - The type of the event.
+     * @param listener - The listener callback.
+     * @returns `this`
+     */
+    once(type: keyof MapEventType | string, listener?: Listener): this | Promise<any>;
     once(type: keyof MapEventType | string, layerIdOrListener: string | Listener, listener?: Listener): this | Promise<any> {
 
         if (listener === undefined) {
@@ -1483,21 +1503,35 @@ export class Map extends Camera {
     }
 
     /**
-     * Removes an event listener for layer-specific events previously added with `Map#on`.
+     * Removes an event listener for events previously added with `Map#on`.
      *
      * @event
      * @param type - The event type previously used to install the listener.
-     * @param layerIdOrListener - The layer ID or listener previously used to install the listener.
-     * @param listener - (optional) The function previously installed as a listener.
+     * @param layer - The layer ID or listener previously used to install the listener.
+     * @param listener - The function previously installed as a listener.
      * @returns `this`
      */
-    off(type: keyof MapEventType | string, listener: Listener): this;
     off<T extends keyof MapLayerEventType>(
         type: T,
         layer: string,
         listener: (ev: MapLayerEventType[T] & Object) => void,
     ): this;
+    /**
+     * Overload of the `off` method that allows to listen to events without specifying a layer.
+     * @event
+     * @param type - The type of the event.
+     * @param listener - The function previously installed as a listener.
+     * @returns `this`
+     */
     off<T extends keyof MapEventType>(type: T, listener: (ev: MapEventType[T] & Object) => void): this;
+    /**
+     * Overload of the `off` method that allows to listen to events without specifying a layer.
+     * @event
+     * @param type - The type of the event.
+     * @param listener - The function previously installed as a listener.
+     * @returns `this`
+     */
+    off(type: keyof MapEventType | string, listener: Listener): this;
     off(type: keyof MapEventType | string, layerIdOrListener: string | Listener, listener?: Listener): this {
         if (listener === undefined) {
             return super.off(type, layerIdOrListener as Listener);
@@ -1859,7 +1893,7 @@ export class Map extends Camera {
      *
      * @param id - The ID of the source to add. Must not conflict with existing sources.
      * @param source - The source object, conforming to the
-     * MapLibre Style Specification's [source definition](https://maplibre.org/maplibre-style-spec/#sources) or
+     * MapLibre Style Specification's [source definition](https://maplibre.org/maplibre-style-spec/sources) or
      * {@link CanvasSourceSpecification}.
      * @returns `this`
      * @example
@@ -1940,7 +1974,8 @@ export class Map extends Camera {
             this.terrain = null;
             if (this.painter.renderToTexture) this.painter.renderToTexture.destruct();
             this.painter.renderToTexture = null;
-            this.transform.updateElevation(this.terrain);
+            this.transform._minEleveationForCurrentTile = 0;
+            this.transform.elevation = 0;
         } else {
             // add terrain
             const sourceCache = this.style.sourceCaches[options.source];
@@ -1954,12 +1989,16 @@ export class Map extends Camera {
             }
             this.terrain = new Terrain(this.painter, sourceCache, options);
             this.painter.renderToTexture = new RenderToTexture(this.painter, this.terrain);
-            this.transform.updateElevation(this.terrain);
+            this.transform._minEleveationForCurrentTile = this.terrain.getMinTileElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+            this.transform.elevation = this.terrain.getElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
             this._terrainDataCallback = e => {
                 if (e.dataType === 'style') {
                     this.terrain.sourceCache.freeRtt();
                 } else if (e.dataType === 'source' && e.tile) {
-                    if (e.sourceId === options.source) this.transform.updateElevation(this.terrain);
+                    if (e.sourceId === options.source && !this._elevationFreeze) {
+                        this.transform._minEleveationForCurrentTile = this.terrain.getMinTileElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+                        this.transform.elevation = this.terrain.getElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+                    }
                     this.terrain.sourceCache.freeRtt(e.tile.tileID);
                 }
             };
@@ -2061,10 +2100,10 @@ export class Map extends Camera {
     /**
      * Add an image to the style. This image can be displayed on the map like any other icon in the style's
      * sprite using the image's ID with
-     * [`icon-image`](https://maplibre.org/maplibre-style-spec/#layout-symbol-icon-image),
-     * [`background-pattern`](https://maplibre.org/maplibre-style-spec/#paint-background-background-pattern),
-     * [`fill-pattern`](https://maplibre.org/maplibre-style-spec/#paint-fill-fill-pattern),
-     * or [`line-pattern`](https://maplibre.org/maplibre-style-spec/#paint-line-line-pattern).
+     * [`icon-image`](https://maplibre.org/maplibre-style-spec/layers/#layout-symbol-icon-image),
+     * [`background-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-background-background-pattern),
+     * [`fill-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-fill-fill-pattern),
+     * or [`line-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-line-line-pattern).
      *
      * A {@link ErrorEvent} event will be fired if the image parameter is invalid or there is not enough space in the sprite to add this image.
      *
@@ -2147,10 +2186,10 @@ export class Map extends Camera {
     /**
      * Update an existing image in a style. This image can be displayed on the map like any other icon in the style's
      * sprite using the image's ID with
-     * [`icon-image`](https://maplibre.org/maplibre-style-spec/#layout-symbol-icon-image),
-     * [`background-pattern`](https://maplibre.org/maplibre-style-spec/#paint-background-background-pattern),
-     * [`fill-pattern`](https://maplibre.org/maplibre-style-spec/#paint-fill-fill-pattern),
-     * or [`line-pattern`](https://maplibre.org/maplibre-style-spec/#paint-line-line-pattern).
+     * [`icon-image`](https://maplibre.org/maplibre-style-spec/layers/#layout-symbol-icon-image),
+     * [`background-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-background-background-pattern),
+     * [`fill-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-fill-fill-pattern),
+     * or [`line-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-line-line-pattern).
      *
      * An {@link ErrorEvent} will be fired if the image parameter is invald.
      *
@@ -2299,14 +2338,14 @@ export class Map extends Camera {
     }
 
     /**
-     * Adds a [MapLibre style layer](https://maplibre.org/maplibre-style-spec/#layers)
+     * Adds a [MapLibre style layer](https://maplibre.org/maplibre-style-spec/layers)
      * to the map's style.
      *
      * A layer defines how data from a specified source will be styled. Read more about layer types
-     * and available paint and layout properties in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/#layers).
+     * and available paint and layout properties in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/layers).
      *
      * @param layer - The layer to add,
-     * conforming to either the MapLibre Style Specification's [layer definition](https://maplibre.org/maplibre-style-spec/#layers) or,
+     * conforming to either the MapLibre Style Specification's [layer definition](https://maplibre.org/maplibre-style-spec/layers) or,
      * less commonly, the {@link CustomLayerInterface} specification.
      * The MapLibre Style Specification's layer definition is appropriate for most layers.
      *
@@ -2442,8 +2481,8 @@ export class Map extends Camera {
 
     /**
      * Sets the zoom extent for the specified style layer. The zoom extent includes the
-     * [minimum zoom level](https://maplibre.org/maplibre-style-spec/#layer-minzoom)
-     * and [maximum zoom level](https://maplibre.org/maplibre-style-spec/#layer-maxzoom))
+     * [minimum zoom level](https://maplibre.org/maplibre-style-spec/layers/#minzoom)
+     * and [maximum zoom level](https://maplibre.org/maplibre-style-spec/layers/#maxzoom))
      * at which the layer will be rendered.
      *
      * Note: For style layers using vector sources, style layers cannot be rendered at zoom levels lower than the
@@ -2674,7 +2713,7 @@ export class Map extends Camera {
     /**
      * Sets the any combination of light values.
      *
-     * @param light - Light properties to set. Must conform to the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/#light).
+     * @param light - Light properties to set. Must conform to the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/light).
      * @param options - Options object.
      * @returns `this`
      *
@@ -3031,9 +3070,9 @@ export class Map extends Camera {
     }
 
     /**
+     * @internal
      * Update this map's style and sources, and re-render the map.
      *
-     * @hidden
      * @param updateStyle - mark the map's style for reprocessing as
      * well as its sources
      * @returns `this`
@@ -3049,9 +3088,10 @@ export class Map extends Camera {
     }
 
     /**
+     * @internal
      * Request that the given callback be executed during the next render
      * frame.  Schedule a render frame if one is not already scheduled.
-     * @hidden
+     *
      * @returns An id that can be used to cancel the callback
      */
     _requestRenderFrame(callback: () => void): TaskID {
@@ -3064,6 +3104,7 @@ export class Map extends Camera {
     }
 
     /**
+     * @internal
      * Call when a (re-)render of the map is required:
      * - The style has changed (`setPaintProperty()`, etc.)
      * - Source data has changed (e.g. tiles have finished loading)
@@ -3071,7 +3112,6 @@ export class Map extends Camera {
      * - A transition is in progress
      *
      * @param paintStartTimeStamp - The time when the animation frame began executing.
-     * @hidden
      *
      * @returns `this`
      */
@@ -3123,8 +3163,16 @@ export class Map extends Camera {
         }
 
         // update terrain stuff
-        if (this.terrain) this.terrain.sourceCache.update(this.transform, this.terrain);
-        this.transform.updateElevation(this.terrain);
+        if (this.terrain) {
+            this.terrain.sourceCache.update(this.transform, this.terrain);
+            this.transform._minEleveationForCurrentTile = this.terrain.getMinTileElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+            if (!this._elevationFreeze) {
+                this.transform.elevation = this.terrain.getElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+            }
+        } else {
+            this.transform._minEleveationForCurrentTile = 0;
+            this.transform.elevation = 0;
+        }
 
         this._placementDirty = this.style && this.style._updatePlacement(this.painter.transform, this.showCollisionBoxes, fadeDuration, this._crossSourceCollisions);
 
